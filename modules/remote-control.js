@@ -94,7 +94,7 @@ document.addEventListener('alpine:init', () => {
         });
 
         this.showNotification('✅ Screen sharing started');
-      } catch(e) {
+      } catch (e) {
         if (e.name === 'NotAllowedError') {
           this.shareError = 'Screen capture permission denied. Please allow screen sharing.';
         } else if (e.name === 'NotSupportedError') {
@@ -185,14 +185,14 @@ document.addEventListener('alpine:init', () => {
               this.showNotification('⚠ Connection to session lost');
             }
           };
-        } catch(e) {
+        } catch (e) {
           resolve(false);
         }
       });
     },
 
     async handleSignaling(msg, role) {
-      switch(msg.type) {
+      switch (msg.type) {
         case 'peer-joined':
           this.connectedPeers.push({ id: msg.peerId, name: `Guest ${this.connectedPeers.length + 1}` });
           await this.createOffer(msg.peerId);
@@ -224,14 +224,14 @@ document.addEventListener('alpine:init', () => {
         ],
       });
 
-      // Add stream tracks
+      // Tambahkan track stream SEBELUM createOffer
       if (this.shareStream) {
         this.shareStream.getTracks().forEach(track => {
           this.pc.addTrack(track, this.shareStream);
         });
       }
 
-      // Data channel for chat & file transfer
+      // Buat DataChannel
       this.dataChannel = this.pc.createDataChannel('control');
       this.setupDataChannel(this.dataChannel);
 
@@ -243,6 +243,8 @@ document.addEventListener('alpine:init', () => {
 
       const offer = await this.pc.createOffer();
       await this.pc.setLocalDescription(offer);
+
+      // Kirim SDP ke signaling server
       if (this.signalingWs) {
         this.signalingWs.send(JSON.stringify({ type: 'offer', to: peerId, sdp: offer }));
       }
@@ -256,19 +258,17 @@ document.addEventListener('alpine:init', () => {
         ],
       });
 
+      // Listener untuk menerima stream dari Host
       this.pc.ontrack = (e) => {
-        this.remoteStream = e.streams[0];
-        this.$nextTick(() => {
-          const video = document.getElementById('remote-video');
-          if (video) { video.srcObject = e.streams[0]; video.play(); }
-        });
+        console.log("📥 Remote stream received");
+        const video = document.getElementById('remote-video');
+        if (video) {
+          video.srcObject = e.streams[0];
+          // Penting: Video harus di-play() setelah srcObject di-set
+          video.play().catch(e => console.error("Play error:", e));
+        }
         this.connecting = false;
         this.connected = true;
-        this.showNotification('✅ Connected to remote session!');
-      };
-
-      this.pc.ondatachannel = (e) => {
-        this.setupDataChannel(e.channel);
       };
 
       this.pc.onicecandidate = (e) => {
@@ -280,6 +280,7 @@ document.addEventListener('alpine:init', () => {
       await this.pc.setRemoteDescription(new RTCSessionDescription(sdp));
       const answer = await this.pc.createAnswer();
       await this.pc.setLocalDescription(answer);
+
       if (this.signalingWs) {
         this.signalingWs.send(JSON.stringify({ type: 'answer', to: from, sdp: answer }));
       }
@@ -291,14 +292,14 @@ document.addEventListener('alpine:init', () => {
 
     setupDataChannel(channel) {
       this.dataChannel = channel;
-      channel.onopen = () => {};
+      channel.onopen = () => { };
       channel.onmessage = (e) => {
         try {
           const msg = JSON.parse(e.data);
           if (msg.type === 'chat') {
             this.chatMessages.push({ from: 'remote', text: msg.text, time: new Date().toLocaleTimeString() });
           }
-        } catch(ex) {}
+        } catch (ex) { }
       };
     },
 
