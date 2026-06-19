@@ -27,7 +27,7 @@ document.addEventListener('alpine:init', () => {
     // WebRTC
     pc: null, // RTCPeerConnection
     signalingWs: null,
-    signalingUrl: 'ws://localhost:9090', // Signaling server WebSocket
+    signalingUrl: 'wss://webrtc-my-project-production.up.railway.app/', // Signaling server WebSocket
 
     // Chat
     chatMessages: [],
