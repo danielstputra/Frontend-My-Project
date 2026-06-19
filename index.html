@@ -255,7 +255,14 @@
   <!-- =====================================================
        MODULE: CONSOLE VIEWER (existing)
        ===================================================== -->
-  <div x-show="$store.app.activeModule === 'console'" x-transition>
+  <div x-show="$store.app.activeModule === 'console'"
+    x-transition:enter="transition ease-out duration-350 transform"
+    x-transition:enter-start="opacity-0 translate-y-4 scale-[0.98]"
+    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+    x-transition:leave="transition ease-in duration-200 transform"
+    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+    x-transition:leave-end="opacity-0 translate-y-4 scale-[0.98]"
+    class="animate-fade-in-up">
     <!-- Main Content Layout (12 Columns aligned grid) -->
     <main class="max-w-8xl mx-auto px-4 py-8 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
@@ -590,7 +597,7 @@
           :class="isDarkMode ? 'bg-slate-900/60 border-slate-800/80 text-slate-100' : 'bg-white/90 border-slate-200 text-slate-800 shadow-lg shadow-slate-300/20'"
           class="flex items-center justify-between border rounded-xl px-5 py-3.5 transition-colors duration-200">
           <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-glow-success"></span>
             <span x-text="t[lang].livePreview"
               class="text-xs text-slate-500 dark:text-slate-400 font-bold font-[Outfit]">LIVE PREVIEW DECK</span>
           </div>
@@ -1032,16 +1039,38 @@
   <!-- =====================================================
        MODULE: API TESTER
        ===================================================== -->
-  <div x-show="$store.app.activeModule === 'api'" x-transition x-data="apiTesterApp"
-    :class="isDarkMode ? 'bg-slate-950' : 'bg-slate-50'">
+  <div x-show="$store.app.activeModule === 'api'"
+    x-transition:enter="transition ease-out duration-350 transform"
+    x-transition:enter-start="opacity-0 translate-y-4 scale-[0.98]"
+    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+    x-transition:leave="transition ease-in duration-200 transform"
+    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+    x-transition:leave-end="opacity-0 translate-y-4 scale-[0.98]"
+    x-data="apiTesterApp"
+    :class="isDarkMode ? 'bg-slate-950/40' : 'bg-slate-50/50'"
+    class="animate-fade-in-up rounded-2xl border border-slate-800/20 shadow-xl backdrop-blur-md overflow-hidden">
     <!-- Toast -->
     <template x-if="notification">
       <div class="toast-notification" x-text="notification"></div>
     </template>
     <!-- Save Modal -->
-    <div x-show="showSaveModal" class="modal-overlay" @click.self="showSaveModal = false">
-      <div class="modal-box">
-        <button @click="showSaveModal = false" class="absolute top-4 right-4 text-slate-500 hover:text-slate-300"><i
+    <div x-show="showSaveModal" 
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      class="modal-overlay" 
+      @click.self="showSaveModal = false">
+      <div class="modal-box"
+        x-transition:enter="transition ease-out duration-300 transform"
+        x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+        x-transition:leave="transition ease-in duration-200 transform"
+        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+        x-transition:leave-end="opacity-0 translate-y-8 scale-95">
+        <button @click="showSaveModal = false" class="absolute top-4 right-4 text-slate-500 hover:text-slate-350 transition-colors"><i
             data-lucide="x" class="w-5 h-5"></i></button>
         <h3 class="text-base font-bold text-slate-100 mb-4">💾 Save to Collections</h3>
         <label class="module-label">Request Name</label>
@@ -1369,8 +1398,16 @@
   <!-- =====================================================
        MODULE: SSH TERMINAL
        ===================================================== -->
-  <div x-show="$store.app.activeModule === 'ssh'" x-transition x-data="sshApp"
-    :class="isDarkMode ? 'bg-slate-950' : 'bg-slate-50'">
+  <div x-show="$store.app.activeModule === 'ssh'"
+    x-transition:enter="transition ease-out duration-350 transform"
+    x-transition:enter-start="opacity-0 translate-y-4 scale-[0.98]"
+    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+    x-transition:leave="transition ease-in duration-200 transform"
+    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+    x-transition:leave-end="opacity-0 translate-y-4 scale-[0.98]"
+    x-data="sshApp"
+    :class="isDarkMode ? 'bg-slate-950/40' : 'bg-slate-50/50'"
+    class="animate-fade-in-up rounded-2xl border border-slate-800/20 shadow-xl backdrop-blur-md overflow-hidden">
     <!-- Toast -->
     <template x-if="connectionError">
       <div class="toast-notification border-red-500/30 text-red-400" x-text="connectionError"></div>
@@ -1470,7 +1507,7 @@
               <template x-for="s in sessions" :key="s.id">
                 <div @click="activeSessionId = s.id" :class="activeSessionId === s.id ? 'active' : ''"
                   class="ssh-session-tab">
-                  <div class="w-2 h-2 rounded-full" :class="s.connected ? 'bg-emerald-400' : 'bg-red-400'"></div>
+                  <div class="w-2 h-2 rounded-full" :class="s.connected ? 'bg-emerald-400 pulse-glow-success' : 'bg-red-400 pulse-glow-danger'"></div>
                   <span x-text="s.title"></span>
                   <button @click.stop="disconnect()" class="ml-1 text-slate-500 hover:text-red-400"><i data-lucide="x"
                       class="w-3 h-3"></i></button>
@@ -1495,38 +1532,71 @@
   <!-- =====================================================
        MODULE: FTP/SFTP
        ===================================================== -->
-  <div x-show="$store.app.activeModule === 'ftp'" x-transition x-data="ftpApp"
-    :class="isDarkMode ? 'bg-slate-950' : 'bg-slate-50'">
+  <div x-show="$store.app.activeModule === 'ftp'"
+    x-transition:enter="transition ease-out duration-350 transform"
+    x-transition:enter-start="opacity-0 translate-y-4 scale-[0.98]"
+    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+    x-transition:leave="transition ease-in duration-200 transform"
+    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+    x-transition:leave-end="opacity-0 translate-y-4 scale-[0.98]"
+    x-data="ftpApp"
+    :class="isDarkMode ? 'bg-slate-950/40' : 'bg-slate-50/50'"
+    class="animate-fade-in-up rounded-2xl border border-slate-800/20 shadow-xl backdrop-blur-md overflow-hidden">
     <!-- Toast -->
     <template x-if="notification">
       <div class="toast-notification" x-text="notification"></div>
     </template>
     <!-- Confirm Dialog -->
-    <template x-if="confirmDialog">
-      <div class="modal-overlay">
-        <div class="modal-box max-w-sm text-center">
-          <p class="text-slate-200 font-semibold mb-6" x-text="confirmDialog.message"></p>
-          <div class="flex gap-3 justify-center">
-            <button @click="confirmDialog.onConfirm()" class="module-btn-danger">Delete</button>
-            <button @click="confirmDialog = null" class="module-btn-secondary">Cancel</button>
-          </div>
+    <div x-show="confirmDialog" 
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      class="modal-overlay"
+      style="display: none;">
+      <div class="modal-box max-w-sm text-center"
+        x-transition:enter="transition ease-out duration-300 transform"
+        x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+        x-transition:leave="transition ease-in duration-200 transform"
+        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+        x-transition:leave-end="opacity-0 translate-y-8 scale-95">
+        <p class="text-slate-200 font-semibold mb-6" x-text="confirmDialog ? confirmDialog.message : ''"></p>
+        <div class="flex gap-3 justify-center">
+          <button @click="confirmDialog.onConfirm(); confirmDialog = null" class="module-btn-danger">Delete</button>
+          <button @click="confirmDialog = null" class="module-btn-secondary">Cancel</button>
         </div>
       </div>
-    </template>
+    </div>
     <!-- Rename Dialog -->
-    <template x-if="renameTarget">
-      <div class="modal-overlay" @click.self="renameTarget = null">
-        <div class="modal-box max-w-sm">
-          <h3 class="text-base font-bold text-slate-100 mb-4">✏️ Rename</h3>
-          <input x-model="renameTarget.newName" @keyup.enter="confirmRename()" class="module-input mb-4"
-            placeholder="New name">
-          <div class="flex gap-3">
-            <button @click="confirmRename()" class="module-btn-primary flex-1">Rename</button>
-            <button @click="renameTarget = null" class="module-btn-secondary">Cancel</button>
-          </div>
+    <div x-show="renameTarget"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      class="modal-overlay"
+      @click.self="renameTarget = null"
+      style="display: none;">
+      <div class="modal-box max-w-sm"
+        x-transition:enter="transition ease-out duration-300 transform"
+        x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+        x-transition:leave="transition ease-in duration-200 transform"
+        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+        x-transition:leave-end="opacity-0 translate-y-8 scale-95">
+        <h3 class="text-base font-bold text-slate-100 mb-4">✏️ Rename</h3>
+        <input x-model="renameTarget ? renameTarget.newName : ''" @keyup.enter="confirmRename()" class="module-input mb-4"
+          placeholder="New name">
+        <div class="flex gap-3">
+          <button @click="confirmRename()" class="module-btn-primary flex-1">Rename</button>
+          <button @click="renameTarget = null" class="module-btn-secondary">Cancel</button>
         </div>
       </div>
-    </template>
+    </div>
     <!-- Connection Bar -->
     <div :class="isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'" class="border-b px-4 py-3">
       <template x-if="!connected">
@@ -1720,15 +1790,37 @@
   <!-- =====================================================
        MODULE: REMOTE DESKTOP
        ===================================================== -->
-  <div x-show="$store.app.activeModule === 'rdp'" x-transition x-data="remoteDesktopApp"
-    :class="isDarkMode ? 'bg-slate-950' : 'bg-slate-50'">
+  <div x-show="$store.app.activeModule === 'rdp'"
+    x-transition:enter="transition ease-out duration-350 transform"
+    x-transition:enter-start="opacity-0 translate-y-4 scale-[0.98]"
+    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+    x-transition:leave="transition ease-in duration-200 transform"
+    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+    x-transition:leave-end="opacity-0 translate-y-4 scale-[0.98]"
+    x-data="remoteDesktopApp"
+    :class="isDarkMode ? 'bg-slate-950/40' : 'bg-slate-50/50'"
+    class="animate-fade-in-up rounded-2xl border border-slate-800/20 shadow-xl backdrop-blur-md overflow-hidden">
     <template x-if="notification">
       <div class="toast-notification" x-text="notification"></div>
     </template>
     <!-- Clipboard modal -->
-    <div x-show="showClipboard" class="modal-overlay" @click.self="showClipboard = false">
-      <div class="modal-box">
-        <button @click="showClipboard = false" class="absolute top-4 right-4 text-slate-500 hover:text-slate-300"><i
+    <div x-show="showClipboard" 
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      class="modal-overlay" 
+      @click.self="showClipboard = false">
+      <div class="modal-box"
+        x-transition:enter="transition ease-out duration-300 transform"
+        x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+        x-transition:leave="transition ease-in duration-200 transform"
+        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+        x-transition:leave-end="opacity-0 translate-y-8 scale-95">
+        <button @click="showClipboard = false" class="absolute top-4 right-4 text-slate-500 hover:text-slate-350 transition-colors"><i
             data-lucide="x" class="w-5 h-5"></i></button>
         <h3 class="text-base font-bold text-slate-100 mb-4">📋 Clipboard Sync</h3>
         <label class="module-label">Remote Clipboard Content</label>
@@ -1787,7 +1879,7 @@
           <template x-if="connected">
             <div class="space-y-3">
               <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+                <div class="w-2 h-2 rounded-full bg-emerald-400 pulse-glow-success"></div>
                 <span class="text-xs font-semibold" :class="statusColor" x-text="rfbStatus || 'Connected'"></span>
               </div>
               <hr class="module-section-divider">
@@ -1854,8 +1946,16 @@
   <!-- =====================================================
        MODULE: REMOTE CONTROL
        ===================================================== -->
-  <div x-show="$store.app.activeModule === 'rc'" x-transition x-data="remoteControlApp"
-    :class="isDarkMode ? 'bg-slate-950' : 'bg-slate-50'">
+  <div x-show="$store.app.activeModule === 'rc'"
+    x-transition:enter="transition ease-out duration-350 transform"
+    x-transition:enter-start="opacity-0 translate-y-4 scale-[0.98]"
+    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+    x-transition:leave="transition ease-in duration-200 transform"
+    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+    x-transition:leave-end="opacity-0 translate-y-4 scale-[0.98]"
+    x-data="remoteControlApp"
+    :class="isDarkMode ? 'bg-slate-950/40' : 'bg-slate-50/50'"
+    class="animate-fade-in-up rounded-2xl border border-slate-800/20 shadow-xl backdrop-blur-md overflow-hidden">
     <template x-if="notification">
       <div class="toast-notification" x-text="notification"></div>
     </template>
@@ -1909,7 +2009,7 @@
               <template x-if="sharing">
                 <div class="space-y-3">
                   <div class="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10">
-                    <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <div class="w-2 h-2 rounded-full bg-emerald-400 pulse-glow-success"></div>
                     <span class="text-xs text-emerald-400 font-semibold">Sharing Active</span>
                   </div>
                   <div class="text-center p-3 rounded-xl" :class="isDarkMode ? 'bg-slate-900' : 'bg-slate-100'">
@@ -1958,7 +2058,7 @@
               <template x-if="connected">
                 <div class="space-y-3">
                   <div class="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10">
-                    <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <div class="w-2 h-2 rounded-full bg-emerald-400 pulse-glow-success"></div>
                     <span class="text-xs text-emerald-400 font-semibold">Connected to <code
                         x-text="targetSessionId"></code></span>
                   </div>
@@ -2065,24 +2165,27 @@
       <span>Console &amp; PS Viewer Premium Suite &copy; 2026. Powered by Alpine.js, TailwindCSS &amp; WebRTC.</span>
       <div class="flex gap-4">
         <button @click="$store.app.showActivationModal = true"
-          class="hover:text-indigo-400 transition flex items-center gap-1"><i data-lucide="key" class="w-3.5 h-3.5"></i>
-          Activate</button>
-        <span>&bull;</span>
-        <button @click="$store.app.openWAModal()" class="hover:text-emerald-400 transition flex items-center gap-1"><i
-            data-lucide="message-circle" class="w-3.5 h-3.5"></i> Hubungi Kami</button>
-      </div>
-    </div>
-  </footer>
-
-
-  <!-- =====================================================
+          class="hover:text-indigo-400 transition flex items-center gap-1"><i data-lucide="key" class="w-3.5 h-3.5"></i>  <!-- =====================================================
        ACTIVATION MODAL
        ===================================================== -->
-  <div x-show="$store.app.showActivationModal" class="modal-overlay"
-    @click.self="$store.app.showActivationModal = false; $store.app.activationError = ''" x-transition>
-    <div class="modal-box">
+  <div x-show="$store.app.showActivationModal" 
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="modal-overlay"
+    @click.self="$store.app.showActivationModal = false; $store.app.activationError = ''">
+    <div class="modal-box"
+      x-transition:enter="transition ease-out duration-300 transform"
+      x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+      x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+      x-transition:leave="transition ease-in duration-200 transform"
+      x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+      x-transition:leave-end="opacity-0 translate-y-8 scale-95">
       <button @click="$store.app.showActivationModal = false; $store.app.activationError = ''"
-        class="absolute top-4 right-4 text-slate-500 hover:text-slate-300">
+        class="absolute top-4 right-4 text-slate-500 hover:text-slate-350 transition-colors">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
       <!-- Success State -->
@@ -2120,7 +2223,7 @@
               <span class="text-base">👑</span>
               <div class="flex-1">
                 <div class="text-xs font-bold text-purple-300">Premium Full Access</div>
-                <div class="text-[10px] text-slate-600">API Tester · SSH · FTP/SFTP · Remote Desktop · Remote Control
+                <div class="text-[10px] text-slate-650">API Tester · SSH · FTP/SFTP · Remote Desktop · Remote Control
                 </div>
               </div>
             </div>
@@ -2128,14 +2231,14 @@
               <span class="text-base">⚡</span>
               <div class="flex-1">
                 <div class="text-xs font-bold text-sky-300">Basic Access</div>
-                <div class="text-[10px] text-slate-600">API Tester · SSH Terminal</div>
+                <div class="text-[10px] text-slate-650">API Tester · SSH Terminal</div>
               </div>
             </div>
             <div class="flex items-center gap-3 p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20">
               <span class="text-base">🎯</span>
               <div class="flex-1">
                 <div class="text-xs font-bold text-amber-300">Trial (API Only)</div>
-                <div class="text-[10px] text-slate-600">API Tester saja</div>
+                <div class="text-[10px] text-slate-650">API Tester saja</div>
               </div>
             </div>
           </div>
@@ -2161,10 +2264,24 @@
   <!-- =====================================================
        WHATSAPP MODAL
        ===================================================== -->
-  <div x-show="$store.app.showWAModal" class="modal-overlay" @click.self="$store.app.closeWAModal()" x-transition>
+  <div x-show="$store.app.showWAModal" 
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="modal-overlay" 
+    @click.self="$store.app.closeWAModal()">
     <div class="modal-box modal-wa"
+      x-transition:enter="transition ease-out duration-300 transform"
+      x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+      x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+      x-transition:leave="transition ease-in duration-200 transform"
+      x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+      x-transition:leave-end="opacity-0 translate-y-8 scale-95"
       x-data="{ message: 'Halo, saya ingin mendapatkan kode aktivasi Premium Suite untuk Console & PS Viewer. Tolong informasikan harga dan cara pembeliannya. Terima kasih!' }">
-      <button @click="$store.app.closeWAModal()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-300">
+      <button @click="$store.app.closeWAModal()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-350 transition-colors">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
       <!-- Header -->
@@ -2175,14 +2292,14 @@
         </div>
         <div>
           <h3 class="text-base font-bold text-slate-100">Hubungi via WhatsApp</h3>
-          <p class="text-xs text-slate-500">+62 851-6192-6718</p>
+          <p class="text-xs text-slate-555">+62 851-6192-6718</p>
         </div>
       </div>
       <!-- Contact Info -->
       <div class="p-3 rounded-xl mb-4"
         style="background: rgba(37, 211, 102, 0.08); border: 1px solid rgba(37, 211, 102, 0.2);">
         <div class="flex items-center gap-2 mb-1">
-          <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+          <div class="w-2 h-2 rounded-full bg-emerald-450 pulse-glow-success"></div>
           <span class="text-xs font-semibold text-emerald-400">Online — Respon Cepat</span>
         </div>
         <p class="text-xs text-slate-500">Senin–Sabtu: 08.00–21.00 WIB</p>
@@ -2193,16 +2310,16 @@
       <!-- Quick messages -->
       <div class="flex flex-wrap gap-2 mb-4">
         <button @click="message = 'Halo, saya ingin mendapatkan kode aktivasi Premium Full Access. Berapa harganya?'"
-          class="text-[10px] px-2 py-1 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-600 transition">
+          class="text-[10px] px-2 py-1 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-650 transition">
           👑 Tanya harga Premium
         </button>
         <button
           @click="message = 'Halo, apakah tersedia paket Basic Access? Saya tertarik dengan fitur API Tester dan SSH.'"
-          class="text-[10px] px-2 py-1 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-600 transition">
+          class="text-[10px] px-2 py-1 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-650 transition">
           ⚡ Tanya paket Basic
         </button>
         <button @click="message = 'Halo, saya ingin mencoba Trial access untuk API Tester. Bagaimana caranya?'"
-          class="text-[10px] px-2 py-1 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-600 transition">
+          class="text-[10px] px-2 py-1 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-650 transition">
           🎯 Tanya Trial
         </button>
       </div>
