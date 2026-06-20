@@ -392,6 +392,7 @@ document.addEventListener('alpine:init', () => {
           this.savedConnections = this.savedConnections.filter(c => c.id !== id);
           localStorage.setItem('ag_ftp_connections', JSON.stringify(this.savedConnections));
           this.showNotification('❌ Connection profile deleted');
+          this.confirmDialog = null;
         }
       };
     },

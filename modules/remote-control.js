@@ -51,7 +51,10 @@ document.addEventListener('alpine:init', () => {
 
     init() {
       this.generateSession();
-      
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        this.signalingUrl = 'ws://localhost:9090/';
+      }
+
       this.$watch('mode', () => {
         this.$nextTick(() => {
           if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();

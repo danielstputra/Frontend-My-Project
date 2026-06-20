@@ -265,6 +265,7 @@ document.addEventListener('alpine:init', () => {
         callback: () => {
           this.savedSessions = this.savedSessions.filter(s => s.id !== id);
           localStorage.setItem('ag_rdp_sessions', JSON.stringify(this.savedSessions));
+          this.confirmDialog = null;
         }
       };
     },

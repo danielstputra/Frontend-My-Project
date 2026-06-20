@@ -494,6 +494,7 @@ document.addEventListener('alpine:init', () => {
         callback: () => {
           this.savedHosts = this.savedHosts.filter(h => h.id !== id);
           localStorage.setItem('ag_ssh_hosts', JSON.stringify(this.savedHosts));
+          this.confirmDialog = null;
         }
       };
     },

@@ -451,6 +451,7 @@ document.addEventListener('alpine:init', () => {
           deleteFromTree(this.collections);
           this.saveCollectionsToStorage();
           this.showNotification('❌ Deleted successfully');
+          this.confirmDialog = null;
         }
       };
     },
@@ -664,6 +665,7 @@ document.addEventListener('alpine:init', () => {
           if (this.activeEnvironmentId === id) this.activeEnvironmentId = '';
           this.saveEnvironmentsToStorage();
           this.showNotification('❌ Environment deleted');
+          this.confirmDialog = null;
         }
       };
     },
