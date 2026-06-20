@@ -22,6 +22,8 @@ document.addEventListener('alpine:init', () => {
     connecting: false,
     connected: false,
     remoteStream: null,
+    iceCandidatesQueue: [],
+    connectionTimeout: null,
     connectionError: '',
 
     // WebRTC
@@ -138,6 +140,11 @@ document.addEventListener('alpine:init', () => {
       if (this.signalingWs) { this.signalingWs.close(); this.signalingWs = null; }
       this.sharing = false;
       this.connectedPeers = [];
+      this.iceCandidatesQueue = [];
+      if (this.connectionTimeout) {
+        clearTimeout(this.connectionTimeout);
+        this.connectionTimeout = null;
+      }
       const preview = document.getElementById('share-preview');
       if (preview) preview.srcObject = null;
       this.generateSession();
@@ -146,15 +153,26 @@ document.addEventListener('alpine:init', () => {
     async connectToSession() {
       if (!this.targetSessionId || this.targetSessionId.length !== 6) {
         this.connectionError = 'Session ID must be 6 digits';
+        this.showNotification('⚠️ ' + this.connectionError);
         return;
       }
       if (!this.targetSecret) {
         this.connectionError = 'Session secret is required';
+        this.showNotification('⚠️ ' + this.connectionError);
         return;
       }
 
       this.connectionError = '';
       this.connecting = true;
+
+      // Start connection timeout timer
+      this.connectionTimeout = setTimeout(() => {
+        if (this.connecting && !this.connected) {
+          this.disconnect();
+          this.connectionError = 'Koneksi timeout: Host belum melakukan share screen atau Session ID tidak aktif.';
+          this.showNotification('❌ ' + this.connectionError);
+        }
+      }, 7000);
 
       // Try real signaling
       const wsConnected = await this.connectSignaling('client');
@@ -165,6 +183,10 @@ document.addEventListener('alpine:init', () => {
         this.connected = true;
         this.showDemoRemoteView();
         this.showNotification('⚠ Demo Mode — Signaling server not found');
+        if (this.connectionTimeout) {
+          clearTimeout(this.connectionTimeout);
+          this.connectionTimeout = null;
+        }
         return;
       }
 
@@ -231,11 +253,24 @@ document.addEventListener('alpine:init', () => {
           await this.handleAnswer(msg.sdp);
           break;
         case 'ice-candidate':
-          if (this.pc) await this.pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+          if (this.pc && this.pc.remoteDescription && this.pc.remoteDescription.type) {
+            try {
+              await this.pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+            } catch(e) {
+              console.error("Error adding ice candidate:", e);
+            }
+          } else {
+            this.iceCandidatesQueue.push(msg.candidate);
+          }
           break;
         case 'auth-failed':
-          this.connectionError = 'Invalid session ID or secret';
+          this.connectionError = msg.message || 'Host belum melakukan share screen atau session ID tidak aktif.';
           this.connecting = false;
+          this.showNotification('❌ ' + this.connectionError);
+          if (this.connectionTimeout) {
+            clearTimeout(this.connectionTimeout);
+            this.connectionTimeout = null;
+          }
           break;
       }
     },
@@ -285,14 +320,27 @@ document.addEventListener('alpine:init', () => {
       // Listener untuk menerima stream dari Host
       this.pc.ontrack = (e) => {
         console.log("📥 Remote stream received");
-        const video = document.getElementById('remote-video');
-        if (video) {
-          video.srcObject = e.streams[0];
-          // Penting: Video harus di-play() setelah srcObject di-set
-          video.play().catch(e => console.error("Play error:", e));
-        }
+        this.remoteStream = e.streams[0]; // Set state to trigger Alpine.js rendering of remote-video element
+        this.$nextTick(() => {
+          const video = document.getElementById('remote-video');
+          if (video) {
+            video.srcObject = e.streams[0];
+            // Penting: Video harus di-play() setelah srcObject di-set
+            video.play().catch(ex => console.error("Play error:", ex));
+          }
+        });
         this.connecting = false;
         this.connected = true;
+        if (this.connectionTimeout) {
+          clearTimeout(this.connectionTimeout);
+          this.connectionTimeout = null;
+        }
+      };
+
+      // Listener untuk menerima data channel dari Host
+      this.pc.ondatachannel = (e) => {
+        console.log("📥 Data channel received");
+        this.setupDataChannel(e.channel);
       };
 
       this.pc.onicecandidate = (e) => {
@@ -302,6 +350,7 @@ document.addEventListener('alpine:init', () => {
       };
 
       await this.pc.setRemoteDescription(new RTCSessionDescription(sdp));
+      await this.processIceQueue(); // Process queued ICE candidates
       const answer = await this.pc.createAnswer();
       await this.pc.setLocalDescription(answer);
 
@@ -311,7 +360,22 @@ document.addEventListener('alpine:init', () => {
     },
 
     async handleAnswer(sdp) {
-      if (this.pc) await this.pc.setRemoteDescription(new RTCSessionDescription(sdp));
+      if (this.pc) {
+        await this.pc.setRemoteDescription(new RTCSessionDescription(sdp));
+        await this.processIceQueue();
+      }
+    },
+
+    async processIceQueue() {
+      if (!this.pc || !this.pc.remoteDescription) return;
+      while (this.iceCandidatesQueue.length > 0) {
+        const candidate = this.iceCandidatesQueue.shift();
+        try {
+          await this.pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch(e) {
+          console.error("Error adding queued ice candidate:", e);
+        }
+      }
     },
 
     setupDataChannel(channel) {
@@ -363,6 +427,11 @@ document.addEventListener('alpine:init', () => {
       this.chatMessages = [];
       this.targetSessionId = '';
       this.targetSecret = '';
+      this.iceCandidatesQueue = [];
+      if (this.connectionTimeout) {
+        clearTimeout(this.connectionTimeout);
+        this.connectionTimeout = null;
+      }
       const container = document.getElementById('remote-view-container');
       if (container) container.innerHTML = '';
     },
