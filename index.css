@@ -1151,3 +1151,58 @@ body {
   box-shadow: 0 0 12px 1px rgba(var(--primary), 0.25);
 }
 
+/* =====================================================
+   MOBILE & HANDPHONE OPTIMIZATIONS (768px & below)
+   ===================================================== */
+@media (max-width: 768px) {
+  /* Prevent horizontal grid squishing in API key-value fields */
+  .api-kv-row {
+    grid-template-columns: 24px 1fr 24px !important;
+    grid-template-rows: auto auto;
+    gap: 6px !important;
+    border-bottom: 1px dashed var(--border-color);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+  }
+  .api-kv-row > input[type="checkbox"] {
+    grid-row: 1 / span 2;
+    grid-column: 1;
+    align-self: center;
+  }
+  .api-kv-row > input:nth-child(2) {
+    grid-row: 1;
+    grid-column: 2;
+    margin-bottom: 2px;
+  }
+  .api-kv-row > input:nth-child(3) {
+    grid-row: 2;
+    grid-column: 2;
+  }
+  .api-kv-row > button {
+    grid-row: 1 / span 2;
+    grid-column: 3;
+    align-self: center;
+  }
+
+  /* Prevent FTP file rows text overlap by hiding modified date */
+  .ftp-file-row {
+    grid-template-columns: 20px 1fr 70px !important;
+    gap: 6px !important;
+    padding: 6px 8px !important;
+  }
+  .ftp-file-row > span:nth-of-type(3) {
+    display: none !important; /* Hide modified date */
+  }
+
+  /* General mobile spacing adjustments */
+  .premium-card {
+    padding: 16px !important;
+  }
+  .toast-notification {
+    left: 16px !important;
+    right: 16px !important;
+    width: auto !important;
+    transform: none !important;
+  }
+}
+
