@@ -235,7 +235,9 @@ document.addEventListener('alpine:init', () => {
         macos: "macOS Terminal (zsh)",
         ubuntu: "Ubuntu Linux (bash)",
         kali: "Kali Linux (Hacker)",
-        centos: "CentOS Server (bash)"
+        centos: "CentOS Server (bash)",
+        noResultsTitle: "Pencarian Tidak Ada",
+        noResultsDesc: "Coba gunakan kata kunci lainnya"
       },
       en: {
         title: "Console Log Viewer & Simulator",
@@ -305,7 +307,9 @@ document.addEventListener('alpine:init', () => {
         macos: "macOS Terminal (zsh)",
         ubuntu: "Ubuntu Linux (bash)",
         kali: "Kali Linux (Hacker)",
-        centos: "CentOS Server (bash)"
+        centos: "CentOS Server (bash)",
+        noResultsTitle: "No Results Found",
+        noResultsDesc: "Try using different keywords"
       }
     },
 

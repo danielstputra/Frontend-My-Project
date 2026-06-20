@@ -43,6 +43,8 @@ document.addEventListener('alpine:init', () => {
     showHidden: false,
     notification: '',
     confirmDialog: null, // { message, onConfirm }
+    promptDialog: null,
+    promptInput: '',
     renameTarget: null, // { file, panel, newName }
 
     // Demo file system
@@ -103,6 +105,22 @@ document.addEventListener('alpine:init', () => {
     init() {
       const saved = localStorage.getItem('ag_ftp_connections');
       if (saved) { try { this.savedConnections = JSON.parse(saved); } catch(e) {} }
+      
+      this.$watch('localFiles', () => {
+        this.$nextTick(() => {
+          if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        });
+      });
+      this.$watch('remoteFiles', () => {
+        this.$nextTick(() => {
+          if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        });
+      });
+      this.$watch('transfers', () => {
+        this.$nextTick(() => {
+          if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        });
+      });
     },
 
     get filteredConnections() {
@@ -284,12 +302,19 @@ document.addEventListener('alpine:init', () => {
     },
 
     createDirectory(panel) {
-      const name = prompt('New folder name:');
-      if (!name) return;
-      const newDir = { name, type: 'dir', size: 4096, modified: new Date().toLocaleString(), perms: 'drwxr-xr-x', owner: 'user' };
-      if (panel === 'remote') this.remoteFiles.unshift(newDir);
-      else this.localFiles.unshift(newDir);
-      this.showNotification(`✅ Folder "${name}" created`);
+      this.promptInput = '';
+      this.promptDialog = {
+        title: 'New Folder',
+        label: 'Folder Name',
+        placeholder: 'Enter folder name...',
+        callback: (name) => {
+          if (!name || !name.trim()) return;
+          const newDir = { name: name.trim(), type: 'dir', size: 4096, modified: new Date().toLocaleString(), perms: 'drwxr-xr-x', owner: 'user' };
+          if (panel === 'remote') this.remoteFiles.unshift(newDir);
+          else this.localFiles.unshift(newDir);
+          this.showNotification(`✅ Folder "${name.trim()}" created`);
+        }
+      };
     },
 
     startRename(file, panel) {
@@ -361,8 +386,14 @@ document.addEventListener('alpine:init', () => {
     },
 
     deleteConnection(id) {
-      this.savedConnections = this.savedConnections.filter(c => c.id !== id);
-      localStorage.setItem('ag_ftp_connections', JSON.stringify(this.savedConnections));
+      this.confirmDialog = {
+        message: 'Are you sure you want to delete this connection profile?',
+        onConfirm: () => {
+          this.savedConnections = this.savedConnections.filter(c => c.id !== id);
+          localStorage.setItem('ag_ftp_connections', JSON.stringify(this.savedConnections));
+          this.showNotification('❌ Connection profile deleted');
+        }
+      };
     },
 
     refreshRemote() { this.loadRemoteDir(this.remoteCwd); },

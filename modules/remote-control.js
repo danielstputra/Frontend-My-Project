@@ -51,6 +51,27 @@ document.addEventListener('alpine:init', () => {
 
     init() {
       this.generateSession();
+      
+      this.$watch('mode', () => {
+        this.$nextTick(() => {
+          if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        });
+      });
+      this.$watch('sharing', () => {
+        this.$nextTick(() => {
+          if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        });
+      });
+      this.$watch('connected', () => {
+        this.$nextTick(() => {
+          if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        });
+      });
+      this.$watch('connecting', () => {
+        this.$nextTick(() => {
+          if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        });
+      });
     },
 
     generateSession() {

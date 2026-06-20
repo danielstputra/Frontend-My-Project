@@ -40,6 +40,7 @@ document.addEventListener('alpine:init', () => {
     savedHosts: [],
     searchHost: '',
     showAddHost: false,
+    confirmDialog: null,
 
     init() {
       const saved = localStorage.getItem('ag_ssh_hosts');
@@ -487,8 +488,14 @@ document.addEventListener('alpine:init', () => {
     },
 
     deleteHost(id) {
-      this.savedHosts = this.savedHosts.filter(h => h.id !== id);
-      localStorage.setItem('ag_ssh_hosts', JSON.stringify(this.savedHosts));
+      this.confirmDialog = {
+        title: 'Delete Saved Host',
+        message: 'Are you sure you want to delete this saved SSH connection profile?',
+        callback: () => {
+          this.savedHosts = this.savedHosts.filter(h => h.id !== id);
+          localStorage.setItem('ag_ssh_hosts', JSON.stringify(this.savedHosts));
+        }
+      };
     },
 
     newSession() {

@@ -37,6 +37,10 @@ document.addEventListener('alpine:init', () => {
     savedSessions: [],
     searchSess: '',
     notification: '',
+    confirmDialog: null,
+    showPasswordModal: false,
+    passwordInput: '',
+    rfbTempInstance: null,
 
     // UI state
     showControls: true,
@@ -125,8 +129,9 @@ document.addEventListener('alpine:init', () => {
         });
 
         rfb.addEventListener('credentialsrequired', () => {
-          const pwd = prompt('VNC Password required:');
-          rfb.sendCredentials({ password: pwd });
+          this.rfbTempInstance = rfb;
+          this.passwordInput = '';
+          this.showPasswordModal = true;
         });
 
         rfb.addEventListener('desktopname', (e) => {
@@ -254,8 +259,22 @@ document.addEventListener('alpine:init', () => {
     },
 
     deleteSession(id) {
-      this.savedSessions = this.savedSessions.filter(s => s.id !== id);
-      localStorage.setItem('ag_rdp_sessions', JSON.stringify(this.savedSessions));
+      this.confirmDialog = {
+        title: 'Delete Session',
+        message: 'Are you sure you want to delete this saved Remote Desktop session profile?',
+        callback: () => {
+          this.savedSessions = this.savedSessions.filter(s => s.id !== id);
+          localStorage.setItem('ag_rdp_sessions', JSON.stringify(this.savedSessions));
+        }
+      };
+    },
+
+    submitVncPassword() {
+      if (this.rfbTempInstance) {
+        this.rfbTempInstance.sendCredentials({ password: this.passwordInput });
+        this.rfbTempInstance = null;
+        this.showPasswordModal = false;
+      }
     },
 
     showNotification(msg) {
