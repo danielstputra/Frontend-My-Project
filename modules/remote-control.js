@@ -77,6 +77,13 @@ document.addEventListener('alpine:init', () => {
           if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
         });
       });
+
+      document.addEventListener('fullscreenchange', () => {
+        this.isFullscreen = (document.fullscreenElement !== null);
+        this.$nextTick(() => {
+          if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        });
+      });
     },
 
     generateSession() {
@@ -442,7 +449,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     toggleFullscreen() {
-      const el = document.getElementById('rc-viewer-panel');
+      const el = document.getElementById('rc-video-wrapper');
       if (!document.fullscreenElement) {
         el?.requestFullscreen().then(() => this.isFullscreen = true);
       } else {
