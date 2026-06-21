@@ -50,6 +50,7 @@ document.addEventListener('alpine:init', () => {
     showInfo: false,
     isFullscreen: false,
     transferFiles: [],
+    activeIncomingFile: null,
 
     init() {
       this.generateSession();
@@ -252,6 +253,13 @@ document.addEventListener('alpine:init', () => {
           break;
         case 'peer-left':
           this.connectedPeers = this.connectedPeers.filter(p => p.id !== msg.peerId);
+          if (role === 'client' && (msg.role === 'host' || msg.peerId === 'host')) {
+            this.disconnect();
+            this.showNotification('🔴 Host telah menghentikan share screen.');
+          } else if (role === 'host') {
+            this.showNotification('🔴 Klien terputus.');
+            this.connectedPeers = [];
+          }
           break;
         case 'offer':
           await this.handleOffer(msg.sdp, msg.from);
@@ -290,6 +298,15 @@ document.addEventListener('alpine:init', () => {
         ],
       });
 
+      this.pc.onconnectionstatechange = () => {
+        if (this.pc && (this.pc.connectionState === 'disconnected' || this.pc.connectionState === 'failed' || this.pc.connectionState === 'closed')) {
+          console.log("WebRTC host PC connection state changed to:", this.pc.connectionState);
+          if (this.pc) { this.pc.close(); this.pc = null; }
+          this.connectedPeers = [];
+          this.showNotification('🔴 Klien terputus.');
+        }
+      };
+
       // Tambahkan track stream SEBELUM createOffer
       if (this.shareStream) {
         this.shareStream.getTracks().forEach(track => {
@@ -324,10 +341,28 @@ document.addEventListener('alpine:init', () => {
         ],
       });
 
+      this.pc.onconnectionstatechange = () => {
+        if (this.pc && (this.pc.connectionState === 'disconnected' || this.pc.connectionState === 'failed' || this.pc.connectionState === 'closed')) {
+          console.log("WebRTC client PC connection state changed to:", this.pc.connectionState);
+          this.disconnect();
+          this.showNotification('🔴 Koneksi ke host terputus.');
+        }
+      };
+
       // Listener untuk menerima stream dari Host
       this.pc.ontrack = (e) => {
         console.log("📥 Remote stream received");
         this.remoteStream = e.streams[0]; // Set state to trigger Alpine.js rendering of remote-video element
+
+        // Listen for track ended to automatically disconnect
+        e.streams[0].getTracks().forEach(track => {
+          track.addEventListener('ended', () => {
+            console.log("Remote track ended, disconnecting...");
+            this.disconnect();
+            this.showNotification('🔴 Sesi share screen telah dihentikan oleh Host.');
+          });
+        });
+
         this.$nextTick(() => {
           const video = document.getElementById('remote-video');
           if (video) {
@@ -387,14 +422,69 @@ document.addEventListener('alpine:init', () => {
 
     setupDataChannel(channel) {
       this.dataChannel = channel;
+      channel.binaryType = 'arraybuffer';
+      channel.bufferedAmountLowThreshold = 65536;
+
       channel.onopen = () => { };
       channel.onmessage = (e) => {
-        try {
-          const msg = JSON.parse(e.data);
-          if (msg.type === 'chat') {
-            this.chatMessages.push({ from: 'remote', text: msg.text, time: new Date().toLocaleTimeString() });
+        if (typeof e.data === 'string') {
+          try {
+            const msg = JSON.parse(e.data);
+            if (msg.type === 'chat') {
+              this.chatMessages.push({ from: 'remote', text: msg.text, time: new Date().toLocaleTimeString() });
+            } else if (msg.type === 'file-start') {
+              this.activeIncomingFile = {
+                id: msg.id,
+                name: msg.name,
+                size: msg.size,
+                receivedSize: 0,
+                chunks: []
+              };
+              this.transferFiles.unshift({
+                id: msg.id,
+                name: msg.name,
+                size: msg.size,
+                progress: 0,
+                status: 'receiving'
+              });
+              this.showNotification(`📥 Menerima file: ${msg.name}`);
+            } else if (msg.type === 'file-end') {
+              if (this.activeIncomingFile && this.activeIncomingFile.id === msg.id) {
+                const blob = new Blob(this.activeIncomingFile.chunks);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = this.activeIncomingFile.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                const item = this.transferFiles.find(t => t.id === msg.id);
+                if (item) {
+                  item.progress = 100;
+                  item.status = 'done';
+                }
+                this.showNotification(`✅ File ${this.activeIncomingFile.name} berhasil diunduh!`);
+                this.activeIncomingFile = null;
+              }
+            }
+          } catch (ex) {
+            console.error("Gagal memproses data channel message:", ex);
           }
-        } catch (ex) { }
+        } else {
+          // Binary chunk
+          if (this.activeIncomingFile) {
+            this.activeIncomingFile.chunks.push(e.data);
+            this.activeIncomingFile.receivedSize += e.data.byteLength;
+            const progress = Math.min(Math.round((this.activeIncomingFile.receivedSize / this.activeIncomingFile.size) * 100), 100);
+            const item = this.transferFiles.find(t => t.id === this.activeIncomingFile.id);
+            if (item) {
+              item.progress = progress;
+              item.status = 'receiving';
+            }
+          }
+        }
       };
     },
 
@@ -458,34 +548,84 @@ document.addEventListener('alpine:init', () => {
     },
 
     sendFileToRemote() {
+      if (!this.dataChannel || this.dataChannel.readyState !== 'open') {
+        this.showNotification('⚠️ Koneksi tidak aktif atau Data Channel belum siap.');
+        return;
+      }
+
       const input = document.createElement('input');
       input.type = 'file';
       input.multiple = true;
       input.onchange = (e) => {
         Array.from(e.target.files).forEach(file => {
-          const transfer = { id: Date.now(), name: file.name, size: file.size, progress: 0, status: 'sending' };
+          const fileId = Date.now() + Math.random().toString(36).substr(2, 9);
+          const transfer = { id: fileId, name: file.name, size: file.size, progress: 0, status: 'sending' };
           this.transferFiles.unshift(transfer);
-          // Simulate or send via DataChannel
-          if (this.dataChannel && this.dataChannel.readyState === 'open') {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-              this.dataChannel.send(ev.target.result);
-              transfer.progress = 100;
-              transfer.status = 'done';
-            };
-            reader.readAsArrayBuffer(file);
-          } else {
-            // Simulate
-            let p = 0;
-            const iv = setInterval(() => {
-              p += Math.random() * 20 + 5;
-              transfer.progress = Math.min(Math.round(p), 100);
-              if (transfer.progress >= 100) { transfer.status = 'done'; clearInterval(iv); }
-            }, 200);
-          }
+          
+          // Send metadata
+          this.dataChannel.send(JSON.stringify({
+            type: 'file-start',
+            id: fileId,
+            name: file.name,
+            size: file.size
+          }));
+
+          // Send in chunks
+          this.sendFileInChunks(file, fileId, transfer);
         });
       };
       input.click();
+    },
+
+    sendFileInChunks(file, fileId, transferItem) {
+      const CHUNK_SIZE = 16384; // 16KB chunks
+      let offset = 0;
+      const reader = new FileReader();
+
+      const readNextChunk = () => {
+        if (!this.dataChannel || this.dataChannel.readyState !== 'open') {
+          transferItem.status = 'failed';
+          this.showNotification('❌ Pengiriman file gagal: Data Channel terputus.');
+          return;
+        }
+
+        if (offset >= file.size) {
+          // File completed sending
+          this.dataChannel.send(JSON.stringify({ type: 'file-end', id: fileId }));
+          transferItem.progress = 100;
+          transferItem.status = 'done';
+          this.showNotification(`📁 File ${file.name} berhasil dikirim!`);
+          return;
+        }
+
+        const slice = file.slice(offset, offset + CHUNK_SIZE);
+        reader.readAsArrayBuffer(slice);
+      };
+
+      reader.onload = (e) => {
+        const buffer = e.target.result;
+        
+        // Handle DataChannel backpressure
+        if (this.dataChannel.bufferedAmount > 1048576) { // 1MB limit
+          const listener = () => {
+            this.dataChannel.removeEventListener('bufferedamountlow', listener);
+            if (this.dataChannel && this.dataChannel.readyState === 'open') {
+              this.dataChannel.send(buffer);
+              offset += buffer.byteLength;
+              transferItem.progress = Math.min(Math.round((offset / file.size) * 100), 100);
+              readNextChunk();
+            }
+          };
+          this.dataChannel.addEventListener('bufferedamountlow', listener);
+        } else {
+          this.dataChannel.send(buffer);
+          offset += buffer.byteLength;
+          transferItem.progress = Math.min(Math.round((offset / file.size) * 100), 100);
+          readNextChunk();
+        }
+      };
+
+      readNextChunk();
     },
 
     formatSize(bytes) {

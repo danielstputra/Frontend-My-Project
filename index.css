@@ -1204,5 +1204,14 @@ body {
     width: auto !important;
     transform: none !important;
   }
+
+  /* Hide sidebar on mobile when connected to a session */
+  .rc-layout.connected-active .rc-sidebar {
+    display: none !important;
+  }
+  .rc-layout.connected-active #rc-video-wrapper {
+    height: calc(100vh - 180px) !important;
+    min-height: 450px !important;
+  }
 }
 
